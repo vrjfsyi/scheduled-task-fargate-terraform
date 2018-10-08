@@ -4,23 +4,26 @@ resource "aws_ecs_cluster" "ecs_cluster" {
 
 # Container Definitions
 
+locals {
+  container_definitions_awslogs_stream_prefix = "ecs"
+}
+
 data "template_file" "ecs_task_container_definitions_template_file" {
   template = "${file("container_definitions/application.json.tpl")}"
 
   vars {
     container_name   = "${var.application}-${var.environment}"
     image_registry   = "${local.ecr_registry}"
-    iamge_repository = "${aws_ecr_repository.ecr_repository.name}"
+    image_repository = "${aws_ecr_repository.ecr_repository.name}"
     image_tag        = "latest"
     environment      = "${var.environment}"
 
-    
     ## https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html#create_awslogs_logdriver_options
     awslogs_group = "${aws_cloudwatch_log_group.fargate_cloudwatch_log_group.name}"
 
     awslogs_region = "${var.aws_region}"
 
-    awslogs_stream_prefix = "ecs"
+    awslogs_stream_prefix = "${local.container_definitions_awslogs_stream_prefix}"
   }
 }
 
@@ -30,13 +33,13 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
   family                = "${var.application}_${var.environment}_family"
   container_definitions = "${data.template_file.ecs_task_container_definitions_template_file.rendered}"
 
-  task_role_arn = "${aws_iam_role.ecs_task_iam_role.arn}"
+  task_role_arn      = "${aws_iam_role.ecs_task_iam_role.arn}"
   execution_role_arn = "${aws_iam_role.ecs_task_execution_iam_role.arn}"
 
   # fargate requires that network mode must be awsvpc
   ## https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#network_mode
   network_mode = "awsvpc"
-  
+
   ## https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
 
   cpu    = "256"
@@ -65,7 +68,7 @@ data "aws_iam_policy_document" "ecs_task_iam_policy_document" {
 }
 
 resource "aws_iam_policy" "ecs_task_iam_policy" {
-  name        = "${var.application}-${var.environment}_ecs_task_iam_policy"
+  name        = "${var.application}-${var.environment}_ecs_task"
   path        = "/"
   policy      = "${data.aws_iam_policy_document.ecs_task_execution_iam_policy_document.json}"
   description = "iam policy for ecs task role"
@@ -88,7 +91,7 @@ data "aws_iam_policy_document" "ecs_task_assume_role_iam_policy_document" {
 }
 
 resource "aws_iam_role" "ecs_task_iam_role" {
-  name               = "${var.application}_${var.environment}_ecs_task-iam_role"
+  name               = "${var.application}_${var.environment}_ecs_task"
   assume_role_policy = "${data.aws_iam_policy_document.ecs_task_assume_role_iam_policy_document.json}"
   description        = "iam role for ecs task"
 }
@@ -148,7 +151,7 @@ data "aws_iam_policy_document" "ecs_task_execution_iam_policy_document" {
 }
 
 resource "aws_iam_policy" "ecs_task_execution_iam_policy" {
-  name        = "${var.application}_${var.environment}_ecs_task_execution_iam_policy"
+  name        = "${var.application}_${var.environment}_ecs_task_execution"
   path        = "/"
   policy      = "${data.aws_iam_policy_document.ecs_task_execution_iam_policy_document.json}"
   description = "iam policy for ecs task execution role"
@@ -171,7 +174,7 @@ data "aws_iam_policy_document" "ecs_task_execution_assume_role_iam_policy_docume
 }
 
 resource "aws_iam_role" "ecs_task_execution_iam_role" {
-  name               = "${var.application}_${var.environment}_ecs_task_execution_iam_role"
+  name               = "${var.application}_${var.environment}_ecs_task_execution"
   assume_role_policy = "${data.aws_iam_policy_document.ecs_task_execution_assume_role_iam_policy_document.json}"
   description        = "iam role for ecs task execution"
 }
