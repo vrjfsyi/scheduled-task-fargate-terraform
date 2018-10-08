@@ -18,6 +18,10 @@ plan: ## terraform plan
 apply: ## terraform apply
 	@terraform apply
 
+.PHONY: destroy
+destroy: ## terraform destroy
+	@terraform destroy
+
 .PHONY: fmt
 fmt: ## terraform fmt
 	@terraform fmt
@@ -25,6 +29,14 @@ fmt: ## terraform fmt
 .PHONY: validate
 validate: ## terraform validate
 	@terraform validate
+
+.PHONY: refresh
+refresh: ## terraform refresh
+	@terraform refresh
+
+.PHONY: output
+output: ## terraform output
+	@terraform output
 
 .PHONY: show
 show: ## terraform show
