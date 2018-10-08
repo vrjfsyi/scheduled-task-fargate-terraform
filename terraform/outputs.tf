@@ -1,5 +1,5 @@
 output "ecr_registry" {
-  value = "${local.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+  value = "${local.ecr_registry}"
 }
 
 output "ecr_repository" {
